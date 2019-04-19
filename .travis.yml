@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t pkchildrens/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run pkchildrens/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t pkchildrens/multi-client ./client
+  - docker build -t pkchildrens/multi-nginx ./nginx
+  - docker build -t pkchildrens/multi-server ./server
+  - docker build -t pkchildrens/multi-worker ./worker
+  # log in to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # take those images and push them to docker hub
+  - docker push pkchildrens/multi-client
+  - docker push pkchildrens/multi-nginx
+  - docker push pkchildrens/multi-server
+  - docker push pkchildrens/multi-worker
